@@ -84,11 +84,16 @@ class LLMConfig:
     ollama_base_url: str | None = None
     drop_params: bool | None = None
     prompt_caching: bool = False
+    extra_headers: dict | None = None
 
     def enable_prompt_caching_known_models(self):
         self.prompt_caching = (
             self.model in PROMPT_CACHE_SUPPORTED_KNOWN_MODELS
         )
+        if self.prompt_caching:
+            self.extra_headers = {
+                'anthropic-beta': 'prompt-caching-2024-07-31',
+            }
 
     def defaults_to_dict(self) -> dict:
         """Serialize fields to a dict for the frontend, including type hints, defaults, and whether it's optional."""

@@ -182,11 +182,6 @@ class CodeActAgent(Agent):
             'temperature': 0.0,
         }
 
-        if self.llm.prompt_caching:
-            params['extra_headers'] = {
-                'anthropic-beta': 'prompt-caching-2024-07-31',
-            }
-
         response = self.llm.completion(**params)
 
         return self.action_parser.parse(response)

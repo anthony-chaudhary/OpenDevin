@@ -112,6 +112,7 @@ class LLM:
             timeout=self.config.timeout,
             temperature=self.config.temperature,
             top_p=self.config.top_p,
+            extra_headers=self.config.extra_headers
         )
 
         completion_unwrapped = self._completion
