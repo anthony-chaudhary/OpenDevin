@@ -182,7 +182,7 @@ class CodeActAgent(Agent):
             'temperature': 0.0,
         }
 
-        if self.llm.supports_prompt_caching:
+        if self.llm.prompt_caching:
             params['extra_headers'] = {
                 'anthropic-beta': 'prompt-caching-2024-07-31',
             }
@@ -198,7 +198,7 @@ class CodeActAgent(Agent):
                 content=[
                     TextContent(
                         text=self.prompt_manager.system_message,
-                        cache_prompt=self.llm.supports_prompt_caching,  # Cache system prompt
+                        cache_prompt=True
                     )
                 ],
             ),
@@ -207,7 +207,7 @@ class CodeActAgent(Agent):
                 content=[
                     TextContent(
                         text=self.prompt_manager.initial_user_message,
-                        cache_prompt=self.llm.supports_prompt_caching,  # if the user asks the same query,
+                        cache_prompt=True
                     )
                 ],
             ),

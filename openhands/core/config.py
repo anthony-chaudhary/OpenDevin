@@ -21,6 +21,10 @@ LLM_SENSITIVE_FIELDS = ['api_key', 'aws_access_key_id', 'aws_secret_access_key']
 _DEFAULT_AGENT = 'CodeActAgent'
 _MAX_ITERATIONS = 100
 
+PROMPT_CACHE_SUPPORTED_KNOWN_MODELS = [
+    'claude-3-5-sonnet-20240620',
+    'claude-3-haiku-20240307',
+]
 
 @dataclass
 class LLMConfig:
@@ -79,6 +83,12 @@ class LLMConfig:
     output_cost_per_token: float | None = None
     ollama_base_url: str | None = None
     drop_params: bool | None = None
+    prompt_caching: bool = False
+
+    def enable_prompt_caching_known_models(self):
+        self.prompt_caching = (
+            self.model in PROMPT_CACHE_SUPPORTED_KNOWN_MODELS
+        )
 
     def defaults_to_dict(self) -> dict:
         """Serialize fields to a dict for the frontend, including type hints, defaults, and whether it's optional."""
@@ -99,6 +109,9 @@ class LLMConfig:
             attr_str.append(f'{attr_name}={repr(attr_value)}')
 
         return f"LLMConfig({', '.join(attr_str)})"
+
+    def __post_init__(self):
+        self.enable_prompt_caching_known_models()
 
     def __repr__(self):
         return self.__str__()

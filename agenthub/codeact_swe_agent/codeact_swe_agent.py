@@ -170,8 +170,8 @@ class CodeActSWEAgent(Agent):
 
     def _get_messages(self, state: State) -> list[Message]:
         messages: list[Message] = [
-            Message(role='system', content=[TextContent(text=self.system_message)]),
-            Message(role='user', content=[TextContent(text=self.in_context_example)]),
+            Message(role='system', content=[TextContent(text=self.system_message, cache_prompt=True)]),
+            Message(role='user', content=[TextContent(text=self.in_context_example, cache_prompt=True)]),
         ]
 
         for event in state.history.get_events():

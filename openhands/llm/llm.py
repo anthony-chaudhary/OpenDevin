@@ -35,11 +35,6 @@ __all__ = ['LLM']
 
 message_separator = '\n\n----------\n\n'
 
-cache_prompting_supported_models = [
-    'claude-3-5-sonnet-20240620',
-    'claude-3-haiku-20240307',
-]
-
 
 class LLM:
     """The LLM class represents a Language Model instance.
@@ -63,9 +58,6 @@ class LLM:
         self.config = copy.deepcopy(config)
         self.metrics = metrics if metrics is not None else Metrics()
         self.cost_metric_supported = True
-        self.supports_prompt_caching = (
-            self.config.model in cache_prompting_supported_models
-        )
 
         # Set up config attributes with default values to prevent AttributeError
         LLMConfig.set_missing_attributes(self.config)
@@ -149,7 +141,15 @@ class LLM:
                 )
             ),
             after=attempt_on_error,
-        )
+        )        
+
+        def update_message_prompt_cache_format(self, element):
+            # Expansion point for alternative caching syntax
+            # Currently opinonated for Anthropic
+            if element.get('cache_prompt') is True:
+                element['cache_control'] = {'type': 'ephemeral'}
+            return element
+                
         def wrapper(*args, **kwargs):
             """Wrapper for the litellm completion function. Logs the input and output of the completion function."""
             # some callers might just send the messages directly
@@ -157,6 +157,8 @@ class LLM:
                 messages = kwargs['messages']
             else:
                 messages = args[1]
+
+            self.update_prompt_caching(messages)
 
             # log the prompt
             debug_message = ''
@@ -166,14 +168,7 @@ class LLM:
                 if isinstance(content, list):
                     for element in content:
                         if isinstance(element, dict):
-                            if 'text' in element:
-                                content_str = element['text'].strip()
-                            elif (
-                                'image_url' in element and 'url' in element['image_url']
-                            ):
-                                content_str = element['image_url']['url']
-                            else:
-                                content_str = str(element)
+                            content_str = self.format_content_element_dict(element)
                         else:
                             content_str = str(element)
 
@@ -254,14 +249,7 @@ class LLM:
                 if isinstance(content, list):
                     for element in content:
                         if isinstance(element, dict):
-                            if 'text' in element:
-                                content_str = element['text']
-                            elif (
-                                'image_url' in element and 'url' in element['image_url']
-                            ):
-                                content_str = element['image_url']['url']
-                            else:
-                                content_str = str(element)
+                            content_str = self.format_content_element_dict(element)
                         else:
                             content_str = str(element)
 
@@ -429,6 +417,31 @@ class LLM:
 
     def supports_vision(self):
         return litellm.supports_vision(self.config.model)
+
+    def format_content_element_dict(self, element):
+        if 'text' in element:
+            content_str = element['text'].strip()
+        elif (
+            'image_url' in element and 'url' in element['image_url']
+        ):
+            content_str = element['image_url']['url']
+        else:
+            content_str = str(element)            
+
+        return content_str
+
+    def update_prompt_caching(self, messages):
+        if self.config.prompt_caching is False:
+            return
+            
+        # not sure why we can't rely on this still be an object
+        for message in messages:
+            content = message['content']
+            if isinstance(content, list):
+                for element in content:
+                    element = self.update_message_prompt_cache_format(element)
+            else:
+                element = self.update_message_prompt_cache_format(element)
 
     def _post_completion(self, response) -> None:
         """Post-process the completion response."""

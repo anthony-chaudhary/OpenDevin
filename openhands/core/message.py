@@ -29,7 +29,7 @@ class TextContent(Content):
             'text': self.text,
         }
         if self.cache_prompt:
-            data['cache_control'] = {'type': 'ephemeral'}
+            data['cache_prompt'] = True
         return data
 
 
@@ -43,7 +43,7 @@ class ImageContent(Content):
         for url in self.image_urls:
             images.append({'type': self.type.value, 'image_url': {'url': url}})
         if self.cache_prompt and images:
-            images[-1]['cache_control'] = {'type': 'ephemeral'}
+            images[-1]['cache_prompt'] = True
         return images
 
 
